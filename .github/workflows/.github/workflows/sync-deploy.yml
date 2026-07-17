@@ -21,12 +21,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
       
       - name: 同步上游代码
+        continue-on-error: true
         run: |
           git remote add upstream https://github.com/owuzan/nodewarden.git
           git fetch upstream main
           git merge upstream/main --allow-unrelated-histories || echo "合并成功或没有新更新"
           git push origin main || echo "没有新变化"
-        continue-on-error: true
       
       - name: 部署到Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
