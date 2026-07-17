@@ -1,0 +1,36 @@
+name: 同步上游并部署到Workers
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检查代码
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: 配置Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: 同步上游代码
+        run: |
+          git remote add upstream https://github.com/owuzan/nodewarden.git
+          git fetch upstream main
+          git merge upstream/main --allow-unrelated-histories || echo "合并成功或没有新更新"
+          git push origin main || echo "没有新变化"
+        continue-on-error: true
+      
+      - name: 部署到Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
